@@ -4,7 +4,7 @@ pipeline {
 
     tools {
         nodejs 'nodejs-26'
-    }
+    } 
 
     environment {
         EC2_HOST = '18.61.154.194'
