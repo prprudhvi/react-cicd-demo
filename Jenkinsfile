@@ -10,8 +10,8 @@ pipeline {
         EC2_HOST = '18.61.154.194'
         EC2_USER = 'ubuntu'
 
-        DEV_DIR = '/var/www/react-app'
-        PROD_DIR = '/var/www/react-cicd-demo/prod'
+        DEV_DIR = '/var/www/react-app-dev'
+        PROD_DIR = '/var/www/react-app-prod'
     }
 
     stages {
