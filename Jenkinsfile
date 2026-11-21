@@ -1,33 +1,31 @@
 pipeline {
+
     agent any
+
+    tools {
+        nodejs 'Node22'
+    }
 
     environment {
         EC2_HOST = '18.61.154.194'
         EC2_USER = 'ubuntu'
-        DEPLOY_PATH = '/var/www/react-app'
+
+        DEV_DIR = '/var/www/react-app'
+        PROD_DIR = '/var/www/react-cicd-demo/prod'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                echo "Building branch: ${env.BRANCH_NAME}"
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    node --version
-                    npm --version
-                    npm ci
-                '''
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'npm test'
+                sh 'npm ci'
             }
         }
 
@@ -37,26 +35,62 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'npm run build'
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Dev') {
+            when {
+                branch 'develop'
+            }
+
+            steps {
+                echo 'Deploying Development'
+
+                sshagent(credentials: ['ec2-ssh-key']) {
+                    sh '''
+                        ssh ubuntu@$EC2_HOST \
+                            "mkdir -p $DEV_DIR"
+
+                        rsync -avz --delete \
+                            -e ssh \
+                            dist/ \
+                            ubuntu@$EC2_HOST:$DEV_DIR/
+
+                        ssh ubuntu@$EC2_HOST \
+                            "sudo nginx -t && sudo systemctl reload nginx"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Production') {
             when {
                 branch 'main'
             }
 
             steps {
+                echo 'Deploying Production'
+
                 sshagent(credentials: ['ec2-ssh-key']) {
-
                     sh '''
-                        rsync -avz --delete \
-                            dist/ \
-                            ubuntu@${EC2_HOST}:${DEPLOY_PATH}/
+                        ssh ubuntu@$EC2_HOST \
+                            "mkdir -p $PROD_DIR"
 
-                        ssh ubuntu@${EC2_HOST} \
+                        rsync -avz --delete \
+                            -e ssh \
+                            dist/ \
+                            ubuntu@$EC2_HOST:$PROD_DIR/
+
+                        ssh ubuntu@$EC2_HOST \
                             "sudo nginx -t && sudo systemctl reload nginx"
                     '''
                 }
@@ -66,15 +100,15 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo "Build succeeded for ${env.BRANCH_NAME}"
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo "Build failed for ${env.BRANCH_NAME}"
         }
 
         always {
-            echo 'Pipeline execution finished.'
+            echo "Finished: ${env.BRANCH_NAME}"
         }
     }
 }
