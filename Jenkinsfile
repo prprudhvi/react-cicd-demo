@@ -57,9 +57,12 @@ pipeline {
 
                 sshagent(credentials: ['ec2-ssh-key']) {
                     bat '''
-                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %DEV_DIR% && mkdir -p %DEV_DIR%"
-                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%DEV_DIR%/
-                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf /tmp/react-cicd-dev"
+                        if errorlevel 1 exit /b 1
+                        scp -o StrictHostKeyChecking=accept-new -r dist %EC2_USER%@%EC2_HOST%:/tmp/react-cicd-dev
+                        if errorlevel 1 exit /b 1
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo rm -rf %DEV_DIR% && sudo mkdir -p %DEV_DIR% && sudo cp -a /tmp/react-cicd-dev/. %DEV_DIR%/ && sudo chmod -R a+rX %DEV_DIR% && rm -rf /tmp/react-cicd-dev && sudo nginx -t && sudo systemctl reload nginx"
+                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
@@ -75,9 +78,12 @@ pipeline {
 
                 sshagent(credentials: ['ec2-ssh-key']) {
                     bat '''
-                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %PROD_DIR% && mkdir -p %PROD_DIR%"
-                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%PROD_DIR%/
-                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf /tmp/react-cicd-prod"
+                        if errorlevel 1 exit /b 1
+                        scp -o StrictHostKeyChecking=accept-new -r dist %EC2_USER%@%EC2_HOST%:/tmp/react-cicd-prod
+                        if errorlevel 1 exit /b 1
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo rm -rf %PROD_DIR% && sudo mkdir -p %PROD_DIR% && sudo cp -a /tmp/react-cicd-prod/. %PROD_DIR%/ && sudo chmod -R a+rX %PROD_DIR% && rm -rf /tmp/react-cicd-prod && sudo nginx -t && sudo systemctl reload nginx"
+                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
