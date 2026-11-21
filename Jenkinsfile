@@ -1,63 +1,83 @@
 pipeline {
+
     agent any
+
+    tools {
+        nodejs 'nodejs-26'
+    }
 
     environment {
         EC2_HOST = '18.61.154.194'
         EC2_USER = 'ubuntu'
-        DEPLOY_PATH = '/var/www/react-app'
+
+        DEV_DIR = '/var/www/react-app'
+        PROD_DIR = '/var/www/react-cicd-demo/prod'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                echo "Building branch: ${env.BRANCH_NAME}"
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    node --version
-                    npm --version
-                    npm ci
-                '''
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'npm test'
+                bat 'npm ci'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npm run lint'
+                bat 'npm run lint'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                bat 'npm test'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                bat 'npm run build'
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Dev') {
+            when {
+                branch 'develop'
+            }
+
+            steps {
+                echo 'Deploying Development'
+
+                sshagent(credentials: ['ec2-ssh-key']) {
+                    bat '''
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %DEV_DIR% && mkdir -p %DEV_DIR%"
+                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%DEV_DIR%/
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Production') {
             when {
                 branch 'main'
             }
 
             steps {
+                echo 'Deploying Production'
+
                 sshagent(credentials: ['ec2-ssh-key']) {
-
-                    sh '''
-                        rsync -avz --delete \
-                            dist/ \
-                            ubuntu@${EC2_HOST}:${DEPLOY_PATH}/
-
-                        ssh ubuntu@${EC2_HOST} \
-                            "sudo nginx -t && sudo systemctl reload nginx"
+                    bat '''
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %PROD_DIR% && mkdir -p %PROD_DIR%"
+                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%PROD_DIR%/
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
                     '''
                 }
             }
@@ -66,15 +86,15 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo "Build succeeded for ${env.BRANCH_NAME}"
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo "Build failed for ${env.BRANCH_NAME}"
         }
 
         always {
-            echo 'Pipeline execution finished.'
+            echo "Finished: ${env.BRANCH_NAME}"
         }
     }
 }
