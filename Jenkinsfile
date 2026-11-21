@@ -7,7 +7,7 @@ pipeline {
     } 
 
     environment {
-        EC2_HOST = '18.61.154.194'
+        EC2_HOST = '40.192.69.205'
         EC2_USER = 'ubuntu'
 
         DEV_DIR = '/var/www/react-app-dev'
