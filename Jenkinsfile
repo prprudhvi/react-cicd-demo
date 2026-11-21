@@ -3,8 +3,8 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'Node22'
-    }
+        nodejs 'nodejs-26'
+    } 
 
     environment {
         EC2_HOST = '18.61.154.194'
@@ -25,25 +25,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                bat 'npm ci'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npm run lint'
+                bat 'npm run lint'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'npm test'
+                bat 'npm test'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                bat 'npm run build'
             }
         }
 
@@ -56,17 +56,10 @@ pipeline {
                 echo 'Deploying Development'
 
                 sshagent(credentials: ['ec2-ssh-key']) {
-                    sh '''
-                        ssh ubuntu@$EC2_HOST \
-                            "mkdir -p $DEV_DIR"
-
-                        rsync -avz --delete \
-                            -e ssh \
-                            dist/ \
-                            ubuntu@$EC2_HOST:$DEV_DIR/
-
-                        ssh ubuntu@$EC2_HOST \
-                            "sudo nginx -t && sudo systemctl reload nginx"
+                    bat '''
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %DEV_DIR% && mkdir -p %DEV_DIR%"
+                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%DEV_DIR%/
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
                     '''
                 }
             }
@@ -81,17 +74,10 @@ pipeline {
                 echo 'Deploying Production'
 
                 sshagent(credentials: ['ec2-ssh-key']) {
-                    sh '''
-                        ssh ubuntu@$EC2_HOST \
-                            "mkdir -p $PROD_DIR"
-
-                        rsync -avz --delete \
-                            -e ssh \
-                            dist/ \
-                            ubuntu@$EC2_HOST:$PROD_DIR/
-
-                        ssh ubuntu@$EC2_HOST \
-                            "sudo nginx -t && sudo systemctl reload nginx"
+                    bat '''
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "rm -rf %PROD_DIR% && mkdir -p %PROD_DIR%"
+                        scp -o StrictHostKeyChecking=accept-new -r dist\\* %EC2_USER%@%EC2_HOST%:%PROD_DIR%/
+                        ssh -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo nginx -t && sudo systemctl reload nginx"
                     '''
                 }
             }
