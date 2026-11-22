@@ -12,7 +12,7 @@ pipeline {
 
         DEV_DIR = '/var/www/react-app-dev'
         PROD_DIR = '/var/www/react-app-prod'
-        VITE_GRAPHQL_URL = 'http://18.60.99.194:4001/graphql'
+        VITE_GRAPHQL_URL = 'http://40.192.69.205:4001/graphql'
     }
 
     stages {
