@@ -1,6 +1,6 @@
 pipeline {
 
-    agent any
+    agent any 
 
     tools {
         nodejs 'nodejs-26'
@@ -70,6 +70,7 @@ pipeline {
 
         stage('Deploy Production') {
             when {
+
                 branch 'main'
             }
 
