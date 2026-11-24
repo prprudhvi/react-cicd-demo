@@ -7,12 +7,12 @@ pipeline {
     } 
 
     environment {
-        EC2_HOST = '40.192.69.205'
+        EC2_HOST = '16.113.1.165'
         EC2_USER = 'ubuntu'
 
         DEV_DIR = '/var/www/react-app-dev'
         PROD_DIR = '/var/www/react-app-prod'
-        VITE_GRAPHQL_URL = 'http://40.192.69.205:4001/graphql'
+        VITE_GRAPHQL_URL = 'http://dev.ikedoc.online//graphql'
     }
 
     stages {

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
+import { GRAPHQL_URL_STORAGE_KEY } from './dashboardApi.js'
 
 function dashboard(ip = '203.0.113.10') {
   return {
@@ -138,7 +139,7 @@ describe('App', () => {
       'http://10.1.1.1:4001/graphql',
       expect.objectContaining({ method: 'POST' }),
     )
-    expect(window.localStorage.getItem('react-cicd-bg.graphqlUrl')).toBe(
+    expect(window.localStorage.getItem(GRAPHQL_URL_STORAGE_KEY)).toBe(
       'http://10.1.1.1:4001/graphql',
     )
   })
