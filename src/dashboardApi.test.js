@@ -93,10 +93,19 @@ describe('resolveGraphqlUrl', () => {
   })
 
   it('prefers a stored endpoint over the build-time URL', () => {
-    vi.stubEnv('VITE_GRAPHQL_URL', 'http://18.60.99.194:4001/graphql')
-    expect(resolveGraphqlUrl()).toBe('http://18.60.99.194:4001/graphql')
+    vi.stubEnv('VITE_GRAPHQL_URL', 'http://40.192.69.205:4001/graphql')
+    expect(resolveGraphqlUrl()).toBe('http://40.192.69.205:4001/graphql')
     window.localStorage.setItem(GRAPHQL_URL_STORAGE_KEY, ' http://10.2.2.2:4001/graphql ')
     expect(resolveGraphqlUrl()).toBe('http://10.2.2.2:4001/graphql')
+  })
+
+  it('ignores an endpoint saved under the previous key', () => {
+    vi.stubEnv('VITE_GRAPHQL_URL', 'http://40.192.69.205:4001/graphql')
+    window.localStorage.setItem(
+      'react-cicd-bg.graphqlUrl',
+      'http://18.60.99.194:4001/graphql',
+    )
+    expect(resolveGraphqlUrl()).toBe('http://40.192.69.205:4001/graphql')
   })
 })
 

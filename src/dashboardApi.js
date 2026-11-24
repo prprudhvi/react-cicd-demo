@@ -1,4 +1,4 @@
-export const DEFAULT_GRAPHQL_URL = 'http://localhost:4001/graphql'
+export const DEFAULT_GRAPHQL_URL = 'http://dev.ikedoc.online/graphql'
 export const GRAPHQL_URL_STORAGE_KEY = 'react-cicd-bg.graphqlUrl'
 
 export const DASHBOARD_QUERY = `query Dashboard {
